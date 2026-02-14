@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignments - Greenfield University</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="logo">U</div>
+      <div class="brand"><h1>Greenfield University</h1><p class="motto">Learn. Innovate. Lead.</p></div>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About Us</a></li>
+        <li><a href="/courses.html">Courses</a></li>
+        <li><a href="/attendance.html">Attendance</a></li>
+        <li><a href="/assignments.html">Assignments</a></li>
+      </ul>
+    </nav>
+    <div class="user-bar">
+      <span id="userName" class="hidden"></span>
+      <button type="button" id="btnLogout" class="btn btn-outline hidden">Logout</button>
+      <a href="/login.html" id="btnLogin" class="btn btn-primary">Login</a>
+    </div>
+  </header>
+  <main>
+    <h1 class="page-title">Assignments & AI Evaluation</h1>
+
+    <div id="loginPrompt" class="card">
+      <p>Please <a href="/login.html?next=/assignments.html">log in</a> as a student to submit assignments and get AI feedback.</p>
+    </div>
+
+    <div id="assignmentsPanel" class="hidden">
+      <div class="card">
+        <h3 class="mb-2">Submit Assignment</h3>
+        <form id="submitForm">
+          <div class="form-group">
+            <label for="course">Course</label>
+            <select id="course"></select>
+          </div>
+          <div class="form-group">
+            <label for="assignment">Assignment</label>
+            <select id="assignment"><option value="">Select course first</option></select>
+          </div>
+          <div class="form-group">
+            <label for="file">Upload file (PDF, DOCX, TXT, or image)</label>
+            <input type="file" id="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg">
+          </div>
+          <div class="form-group">
+            <label for="textContent">Or paste text for evaluation</label>
+            <textarea id="textContent" rows="6" placeholder="Paste your assignment text here for AI feedback..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnSubmit">Submit & Get AI Feedback</button>
+        </form>
+        <div id="feedbackBox" class="hidden mt-2" style="background: #f0f7f4; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary);"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="mb-2">My Submissions</h3>
+        <div id="submissionsList"><p class="text-muted">Loading…</p></div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer"><p>Greenfield University &copy; 2025</p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    (function() {
+      const loginPrompt = document.getElementById('loginPrompt');
+      const assignmentsPanel = document.getElementById('assignmentsPanel');
+      const courseSelect = document.getElementById('course');
+      const assignmentSelect = document.getElementById('assignment');
+      const submitForm = document.getElementById('submitForm');
+      const feedbackBox = document.getElementById('feedbackBox');
+      const submissionsList = document.getElementById('submissionsList');
+
+      fetch('/api/me').then(r => r.json()).then(data => {
+        if (data.user) {
+          document.getElementById('userName').textContent = data.user.name;
+          document.getElementById('userName').classList.remove('hidden');
+          document.getElementById('btnLogout').classList.remove('hidden');
+          document.getElementById('btnLogin').classList.add('hidden');
+          if (data.user.role === 'student') {
+            loginPrompt.classList.add('hidden');
+            assignmentsPanel.classList.remove('hidden');
+            loadCourses();
+            loadSubmissions();
+          } else {
+            loginPrompt.querySelector('p').textContent = 'Assignment submission is for students. Log in as a student to submit.';
+          }
+        }
+      }).catch(() => {});
+
+      document.getElementById('btnLogout').onclick = function() {
+        fetch('/api/logout', { method: 'POST' }).then(() => location.reload());
+      };
+
+      function loadCourses() {
+        fetch('/api/courses').then(r => r.json()).then(data => {
+          const opts = (data.courses || []).map(c => '<option value="' + c.id + '">' + escapeHtml(c.code) + ' - ' + escapeHtml(c.name) + '</option>').join('');
+          courseSelect.innerHTML = '<option value="">Select course</option>' + opts;
+          courseSelect.addEventListener('change', function() {
+            const cid = this.value;
+            assignmentSelect.innerHTML = '<option value="">Select assignment</option>';
+            if (!cid) return;
+            fetch('/api/assignments?courseId=' + cid).then(r => r.json()).then(d => {
+              (d.assignments || []).forEach(a => {
+                assignmentSelect.innerHTML += '<option value="' + a.id + '">' + escapeHtml(a.title) + '</option>';
+              });
+            });
+          });
+        });
+      }
+
+      function loadSubmissions() {
+        fetch('/api/submissions').then(r => r.json()).then(data => {
+          const list = data.submissions || [];
+          if (list.length === 0) {
+            submissionsList.innerHTML = '<p class="text-muted">No submissions yet.</p>';
+            return;
+          }
+          submissionsList.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Assignment</th><th>Submitted</th><th>Score</th><th>Feedback</th></tr></thead><tbody>' +
+            list.map(s => '<tr><td>' + escapeHtml(s.assignment_title) + (s.file_name ? ' (' + escapeHtml(s.file_name) + ')' : '') + '</td><td>' + (s.submitted_at || '').slice(0, 16) + '</td><td>' + (s.score != null ? s.score + '/100' : '–') + '</td><td style="max-width:280px;white-space:pre-wrap;font-size:0.9rem;">' + escapeHtml((s.feedback_text || '').slice(0, 200)) + (s.feedback_text && s.feedback_text.length > 200 ? '…' : '') + '</td></tr>').join('') +
+            '</tbody></table></div>';
+        }).catch(() => { submissionsList.innerHTML = '<p class="text-muted">Could not load submissions.</p>'; });
+      }
+
+      submitForm.onsubmit = function(e) {
+        e.preventDefault();
+        const aid = assignmentSelect.value;
+        if (!aid) { alert('Select an assignment.'); return; }
+        const fileInput = document.getElementById('file');
+        const textContent = document.getElementById('textContent').value.trim();
+        if (!fileInput.files.length && !textContent) {
+          alert('Upload a file or paste text for evaluation.');
+          return;
+        }
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        feedbackBox.classList.add('hidden');
+
+        const formData = new FormData();
+        formData.append('textContent', textContent);
+        if (fileInput.files.length) formData.append('file', fileInput.files[0]);
+
+        fetch('/api/assignments/' + aid + '/submit', {
+          method: 'POST',
+          body: formData
+        }).then(r => r.json()).then(data => {
+          btn.disabled = false;
+          if (data.error) {
+            feedbackBox.innerHTML = '<strong>Error:</strong> ' + escapeHtml(data.error);
+            feedbackBox.classList.remove('hidden');
+            return;
+          }
+          feedbackBox.innerHTML = '<strong>Score: ' + (data.score != null ? data.score + '/100' : '–') + '</strong><pre style="white-space:pre-wrap;margin-top:0.5rem;font-size:0.9rem;">' + escapeHtml(data.feedback || '') + '</pre>';
+          feedbackBox.classList.remove('hidden');
+          loadSubmissions();
+          fileInput.value = '';
+          document.getElementById('textContent').value = '';
+        }).catch(() => {
+          btn.disabled = false;
+          feedbackBox.innerHTML = '<strong>Submission failed.</strong> Try again.';
+          feedbackBox.classList.remove('hidden');
+        });
+      };
+    })();
+  </script>
+</body>
+</html>

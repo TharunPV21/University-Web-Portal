@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance - Greenfield University</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="logo">U</div>
+      <div class="brand"><h1>Greenfield University</h1><p class="motto">Learn. Innovate. Lead.</p></div>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About Us</a></li>
+        <li><a href="/courses.html">Courses</a></li>
+        <li><a href="/attendance.html">Attendance</a></li>
+        <li><a href="/assignments.html">Assignments</a></li>
+      </ul>
+    </nav>
+    <div class="user-bar">
+      <span id="userName" class="hidden"></span>
+      <button type="button" id="btnLogout" class="btn btn-outline hidden">Logout</button>
+      <a href="/login.html" id="btnLogin" class="btn btn-primary">Login</a>
+    </div>
+  </header>
+  <main>
+    <h1 class="page-title">Attendance</h1>
+
+    <div id="loginPrompt" class="card">
+      <p>Please <a href="/login.html?next=/attendance.html">log in</a> as faculty to mark attendance or view records.</p>
+    </div>
+
+    <div id="attendancePanel" class="hidden">
+      <div class="card">
+        <h3 class="mb-2">Mark Attendance</h3>
+        <form id="markForm">
+          <div class="form-group">
+            <label for="course">Class / Course</label>
+            <select id="course" required></select>
+          </div>
+          <div class="form-group">
+            <label for="sessionDate">Date</label>
+            <input type="date" id="sessionDate" required>
+          </div>
+          <div class="form-group">
+            <label>Students</label>
+            <div id="studentsList"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Attendance</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="mb-2">View Records</h3>
+        <div class="form-group">
+          <label for="viewCourse">Course</label>
+          <select id="viewCourse"></select>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="fromDate">From</label>
+            <input type="date" id="fromDate">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="toDate">To</label>
+            <input type="date" id="toDate">
+          </div>
+          <button type="button" id="btnLoadRecords" class="btn btn-primary" style="align-self: flex-end;">Load Records</button>
+        </div>
+        <div id="recordsList" class="mt-2 table-wrap"></div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer"><p>Greenfield University &copy; 2025</p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    (function() {
+      const loginPrompt = document.getElementById('loginPrompt');
+      const attendancePanel = document.getElementById('attendancePanel');
+      const courseSelect = document.getElementById('course');
+      const viewCourseSelect = document.getElementById('viewCourse');
+      const sessionDate = document.getElementById('sessionDate');
+      const studentsList = document.getElementById('studentsList');
+      const markForm = document.getElementById('markForm');
+      const recordsList = document.getElementById('recordsList');
+
+      sessionDate.value = todayStr();
+
+      fetch('/api/me').then(r => r.json()).then(data => {
+        if (data.user) {
+          document.getElementById('userName').textContent = data.user.name;
+          document.getElementById('userName').classList.remove('hidden');
+          document.getElementById('btnLogout').classList.remove('hidden');
+          document.getElementById('btnLogin').classList.add('hidden');
+          if (data.user.role === 'faculty' || data.user.role === 'admin') {
+            loginPrompt.classList.add('hidden');
+            attendancePanel.classList.remove('hidden');
+            loadCourses();
+          } else {
+            loginPrompt.querySelector('p').textContent = 'Attendance marking is for faculty only. You can view your records if available.';
+          }
+        }
+      }).catch(() => {});
+
+      document.getElementById('btnLogout').onclick = function() {
+        fetch('/api/logout', { method: 'POST' }).then(() => location.reload());
+      };
+
+      function loadCourses() {
+        fetch('/api/courses').then(r => r.json()).then(data => {
+          const opts = (data.courses || []).map(c => '<option value="' + c.id + '">' + escapeHtml(c.code) + ' - ' + escapeHtml(c.name) + '</option>').join('');
+          courseSelect.innerHTML = '<option value="">Select class</option>' + opts;
+          viewCourseSelect.innerHTML = '<option value="">Select class</option>' + opts;
+          courseSelect.addEventListener('change', loadStudents);
+          loadStudents();
+        });
+      }
+
+      function loadStudents() {
+        const cid = courseSelect.value;
+        studentsList.innerHTML = '<p class="text-muted">Select a class first.</p>';
+        if (!cid) return;
+        fetch('/api/attendance/students?courseId=' + cid).then(r => r.json()).then(data => {
+          const students = data.students || [];
+          if (students.length === 0) {
+            studentsList.innerHTML = '<p class="text-muted">No students enrolled.</p>';
+            return;
+          }
+          studentsList.innerHTML = students.map(s =>
+            '<label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">' +
+            '<input type="radio" name="s' + s.id + '" value="Present" checked> Present ' +
+            '<input type="radio" name="s' + s.id + '" value="Absent"> Absent ' +
+            '<span>' + escapeHtml(s.name) + '</span></label>'
+          ).join('');
+        });
+      }
+
+      markForm.onsubmit = function(e) {
+        e.preventDefault();
+        const cid = courseSelect.value;
+        const date = sessionDate.value;
+        const inputs = studentsList.querySelectorAll('input[type="radio"]:checked');
+        const records = [];
+        inputs.forEach(inp => {
+          const name = inp.name;
+          const studentId = name.replace('s', '');
+          records.push({ studentId: parseInt(studentId, 10), status: inp.value });
+        });
+        fetch('/api/attendance/mark', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId: parseInt(cid, 10), date, records })
+        }).then(r => r.json()).then(data => {
+          if (data.error) alert(data.error);
+          else alert('Attendance saved.');
+        }).catch(() => alert('Failed to save.'));
+      };
+
+      document.getElementById('btnLoadRecords').onclick = function() {
+        const cid = viewCourseSelect.value;
+        if (!cid) { recordsList.innerHTML = '<p class="text-muted">Select a course.</p>'; return; }
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+        let url = '/api/attendance/records?courseId=' + cid;
+        if (from) url += '&from=' + from;
+        if (to) url += '&to=' + to;
+        fetch(url).then(r => r.json()).then(data => {
+          const rows = data.records || [];
+          if (rows.length === 0) {
+            recordsList.innerHTML = '<p class="text-muted">No records in this range.</p>';
+            return;
+          }
+          recordsList.innerHTML = '<table><thead><tr><th>Date</th><th>Student</th><th>Status</th></tr></thead><tbody>' +
+            rows.map(r => '<tr><td>' + r.session_date + '</td><td>' + escapeHtml(r.student_name) + '</td><td class="status-' + r.status.toLowerCase() + '">' + r.status + '</td></tr>').join('') +
+            '</tbody></table>';
+        }).catch(() => { recordsList.innerHTML = '<p class="text-muted">Could not load records.</p>'; });
+      };
+    })();
+  </script>
+</body>
+</html>

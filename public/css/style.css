@@ -1,0 +1,290 @@
+/* University Portal - Simple, clean, responsive */
+:root {
+  --primary: #1a5f4a;
+  --primary-light: #2d8f6f;
+  --accent: #c9a227;
+  --bg: #f8f9fa;
+  --card: #fff;
+  --text: #2c3e50;
+  --text-muted: #6c757d;
+  --border: #dee2e6;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* Header */
+.site-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #0d3d30 100%);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.brand h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.brand .motto {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.nav-links a:hover {
+  background: rgba(255,255,255,0.15);
+  text-decoration: none;
+}
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.user-bar span {
+  font-size: 0.9rem;
+}
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #1a1a1a;
+}
+.btn-primary:hover {
+  background: #d4ad2a;
+}
+.btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.btn-outline:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Main content */
+main {
+  flex: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.page-title {
+  margin-bottom: 1.25rem;
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(180deg, rgba(26,95,74,0.08) 0%, transparent 100%);
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+}
+.hero h2 {
+  font-size: 1.75rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+.hero p {
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Events section */
+.events-section h3 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+.event-item {
+  padding: 0.75rem;
+  border-left: 4px solid var(--primary);
+  background: var(--bg);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 0.75rem;
+}
+.event-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.event-item small {
+  color: var(--text-muted);
+}
+
+/* Footer */
+.site-footer {
+  background: var(--text);
+  color: #ccc;
+  padding: 1.5rem;
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.site-footer a {
+  color: #fff;
+}
+.site-footer .links {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,95,74,0.15);
+}
+
+/* Tables */
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  background: var(--bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Attendance status badges */
+.status-present { color: #198754; font-weight: 500; }
+.status-absent { color: #dc3545; font-weight: 500; }
+
+/* Login box */
+.login-box {
+  max-width: 360px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+/* Utility */
+.text-muted { color: var(--text-muted); }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 1rem; }
+.hidden { display: none !important; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .nav-links {
+    width: 100%;
+  }
+  .hero h2 { font-size: 1.4rem; }
+  main { padding: 1rem; }
+}

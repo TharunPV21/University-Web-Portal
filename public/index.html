@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>University Portal - Home</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="logo">U</div>
+      <div class="brand">
+        <h1>Greenfield University</h1>
+        <p class="motto">Learn. Innovate. Lead.</p>
+      </div>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About Us</a></li>
+        <li><a href="/courses.html">Courses</a></li>
+        <li><a href="/attendance.html">Attendance</a></li>
+        <li><a href="/assignments.html">Assignments</a></li>
+      </ul>
+    </nav>
+    <div class="user-bar">
+      <span id="userName" class="hidden"></span>
+      <button type="button" id="btnLogout" class="btn btn-outline hidden">Logout</button>
+      <a href="/login.html" id="btnLogin" class="btn btn-primary">Login</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Welcome to Greenfield University</h2>
+      <p>Your gateway to quality education. Access courses, mark attendance, and submit assignments in one place.</p>
+    </section>
+
+    <section class="card events-section">
+      <h3>Upcoming Events & News</h3>
+      <div id="eventsList">
+        <p class="text-muted">Loading events…</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Quick Links</h3>
+      <ul style="list-style: none;">
+        <li class="mt-1"><a href="/attendance.html">→ Mark / View Attendance</a> (Faculty)</li>
+        <li class="mt-1"><a href="/assignments.html">→ Submit Assignment & AI Feedback</a> (Students)</li>
+        <li class="mt-1"><a href="/courses.html">→ Browse Courses</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Greenfield University &copy; 2025</p>
+    <p>123 Campus Drive, Education City | <a href="mailto:contact@greenfield.edu">contact@greenfield.edu</a> | Tel: +1 (555) 123-4567</p>
+    <div class="links">
+      <a href="#">Facebook</a> | <a href="#">Twitter</a> | <a href="#">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (function() {
+      fetch('/api/me').then(r => r.json()).then(data => {
+        if (data.user) {
+          document.getElementById('userName').textContent = data.user.name;
+          document.getElementById('userName').classList.remove('hidden');
+          document.getElementById('btnLogout').classList.remove('hidden');
+          document.getElementById('btnLogin').classList.add('hidden');
+        }
+      }).catch(() => {});
+
+      document.getElementById('btnLogout').onclick = function() {
+        fetch('/api/logout', { method: 'POST' }).then(() => location.reload());
+      };
+
+      fetch('/api/events').then(r => r.json()).then(data => {
+        const el = document.getElementById('eventsList');
+        if (!data.events || data.events.length === 0) {
+          el.innerHTML = '<p class="text-muted">No upcoming events.</p>';
+          return;
+        }
+        el.innerHTML = data.events.map(e => `
+          <div class="event-item">
+            <strong>${escapeHtml(e.title)}</strong>
+            ${e.description ? '<span>' + escapeHtml(e.description) + '</span>' : ''}
+            <small>${e.event_date ? 'Date: ' + e.event_date : ''}</small>
+          </div>
+        `).join('');
+      }).catch(() => {
+        document.getElementById('eventsList').innerHTML = '<p class="text-muted">Could not load events.</p>';
+      });
+    })();
+  </script>
+</body>
+</html>

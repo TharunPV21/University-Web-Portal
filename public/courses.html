@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses - Greenfield University</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="logo">U</div>
+      <div class="brand"><h1>Greenfield University</h1><p class="motto">Learn. Innovate. Lead.</p></div>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About Us</a></li>
+        <li><a href="/courses.html">Courses</a></li>
+        <li><a href="/attendance.html">Attendance</a></li>
+        <li><a href="/assignments.html">Assignments</a></li>
+      </ul>
+    </nav>
+    <div class="user-bar"><a href="/login.html" class="btn btn-primary">Login</a></div>
+  </header>
+  <main>
+    <h1 class="page-title">Courses</h1>
+    <div class="card">
+      <div id="coursesList"><p class="text-muted">Loading…</p></div>
+    </div>
+  </main>
+  <footer class="site-footer"><p>Greenfield University &copy; 2025</p></footer>
+  <script>
+    fetch('/api/courses').then(r => r.json()).then(data => {
+      const el = document.getElementById('coursesList');
+      if (!data.courses || data.courses.length === 0) {
+        el.innerHTML = '<p class="text-muted">No courses.</p>';
+        return;
+      }
+      el.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Code</th><th>Course Name</th></tr></thead><tbody>' +
+        data.courses.map(c => '<tr><td>' + c.code + '</td><td>' + c.name + '</td></tr>').join('') +
+        '</tbody></table></div>';
+    }).catch(() => document.getElementById('coursesList').innerHTML = '<p class="text-muted">Could not load courses.</p>');
+  </script>
+</body>
+</html>
